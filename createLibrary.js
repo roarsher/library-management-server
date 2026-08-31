@@ -52,7 +52,7 @@ const createLibrary = async () => {
     }
 
     const library = await Library.create({
-      name: 'My Library',
+      name: 'Gyan Library',
       address: 'Bhagalpur, Bihar, India',
       contactEmail: 'admin@library.com',
       contactPhone: '9876543210',

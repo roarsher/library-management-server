@@ -45,7 +45,7 @@ const seedProduction = async () => {
 
     if (!library) {
       library = await Library.create({
-        name: 'My Library',
+        name: 'Gyan Library',
         address: 'Bhagalpur, Bihar',
         contactEmail: adminEmail,
         contactPhone: '9999999999',

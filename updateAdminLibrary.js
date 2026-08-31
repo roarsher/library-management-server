@@ -3,8 +3,8 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const User = require('./models/User');
 
-const ADMIN_ID = '6a79d38207e22cf63a8fd9da';
-const LIBRARY_ID = '6a79d3cb15051186bbe5b85d';
+const ADMIN_ID = '6a957109dd8c3d445cc60005';
+const LIBRARY_ID = '6a9571ff82ff329f15173be4';
 
 const updateAdmin = async () => {
   try {
