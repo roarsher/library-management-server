@@ -1,0 +1,67 @@
+ const mongoose = require('mongoose');
+const asyncHandler = require('../utils/asyncHandler');
+const { Seat, SeatBooking, Payment, LeaveRequest, Attendance, Student } = require('../models');
+
+const getDashboardSummary = asyncHandler(async (req, res) => {
+  const libraryId = req.libraryId;
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const [
+    totalSeats,
+    occupiedSeatIds,
+    todayAttendanceCount,
+    pendingBookingRequests,
+    pendingLeaveRequests,
+    studentsOnLeave,
+    expiringMemberships,
+    monthRevenueAgg,
+  ] = await Promise.all([
+    Seat.countDocuments({ libraryId, isActive: true }),
+    // A seat counts as "occupied" if it has at least one active/pending/on-leave
+    // booking — matches the same logic isSeatAvailable() uses, instead of
+    // trusting the no-longer-maintained Seat.status field.
+    SeatBooking.distinct('seatId', {
+      libraryId,
+      status: { $in: ['pending_approval', 'active', 'on_leave'] },
+    }),
+    Attendance.countDocuments({ libraryId, checkInAt: { $gte: startOfDay } }),
+    SeatBooking.countDocuments({ libraryId, status: 'pending_approval' }),
+    LeaveRequest.countDocuments({ libraryId, status: 'pending' }),
+    SeatBooking.countDocuments({ libraryId, status: 'on_leave' }),
+    SeatBooking.countDocuments({
+      libraryId,
+      status: 'active',
+      endDate: {
+        $gte: new Date(),
+        $lte: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
+    }),
+    Payment.aggregate([
+      {
+        $match: {
+          libraryId: new mongoose.Types.ObjectId(libraryId),
+          status: 'verified',
+          createdAt: { $gte: new Date(new Date().setDate(1)) },
+        },
+      },
+      { $group: { _id: null, total: { $sum: '$amount' } } },
+    ]),
+  ]);
+
+  const bookedSeats = occupiedSeatIds.length;
+
+  res.status(200).json({
+    totalSeats,
+    bookedSeats,
+    emptySeats: totalSeats - bookedSeats,
+    todayAttendanceCount,
+    pendingBookingRequests,
+    pendingLeaveRequests,
+    studentsOnLeave,
+    expiringMemberships,
+    monthToDateRevenue: monthRevenueAgg[0]?.total || 0,
+  });
+});
+
+module.exports = { getDashboardSummary };
