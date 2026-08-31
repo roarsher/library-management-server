@@ -1,5 +1,11 @@
- 
+ const dns = require('dns');
+
+dns.setServers(['8.8.8.8', '1.1.1.1']);
+
 require('dotenv').config();
+
+const mongoose = require('mongoose');
+ 
 const app = require('./app');
 const connectDB = require('./config/db');
 const { startCronJobs } = require('./jobs');
