@@ -227,6 +227,32 @@ const deleteStudent = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Students with a birthday in the next 7 days
+// @route   GET /api/students/birthdays-this-week
+// @access  Private (admin)
+const listBirthdaysThisWeek = asyncHandler(async (req, res) => {
+  const students = await Student.find({ libraryId: req.libraryId, dob: { $exists: true } })
+    .populate('userId', 'name phone email');
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const toDayOfYear = (d) => {
+    const start = new Date(d.getFullYear(), 0, 0);
+    return Math.floor((d - start) / (1000 * 60 * 60 * 24));
+  };
+  const todayDoY = toDayOfYear(today);
+
+  const upcoming = students.filter((s) => {
+    const dob = new Date(s.dob);
+    const thisYearBirthday = new Date(today.getFullYear(), dob.getMonth(), dob.getDate());
+    let diff = toDayOfYear(thisYearBirthday) - todayDoY;
+    if (diff < 0) diff += 365;
+    return diff >= 0 && diff <= 7;
+  });
+
+  res.status(200).json({ count: upcoming.length, students: upcoming });
+});
+
 module.exports = {
   submitAdmissionForm,
   getMyProfile,
@@ -236,4 +262,6 @@ module.exports = {
   verifyAdmission,
   updateStudent,
   deleteStudent,
+  listBirthdaysThisWeek, // add
 };
+ 
