@@ -10,6 +10,7 @@ const {
   verifyAdmission,
   updateStudent,
   deleteStudent,
+  listBirthdaysThisWeek,
 } = require('../controllers/studentController');
 const { protect } = require('../middleware/authMiddleware');
 const { restrictTo } = require('../middleware/roleMiddleware');
