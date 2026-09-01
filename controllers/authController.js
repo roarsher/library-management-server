@@ -7,27 +7,48 @@ const { sendOtpEmail } = require('../services/emailService');
 // @desc    Send OTP to email for signup
 // @route   POST /api/auth/send-otp
 // @access  Public
+
 const sendOtp = asyncHandler(async (req, res) => {
   const { email } = req.body;
+
   if (!email) {
     return res.status(400).json({ message: 'Email is required' });
   }
 
   const existingUser = await User.findOne({ email });
+
   if (existingUser) {
-    return res.status(400).json({ message: 'Email is already registered' });
+    return res.status(400).json({
+      message: 'Email is already registered',
+    });
   }
 
   const otp = generateOtp();
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-  // invalidate any previous unused OTPs for this email/purpose
-  await OtpVerification.deleteMany({ email, purpose: 'signup' });
-  await OtpVerification.create({ email, otp, purpose: 'signup', expiresAt });
+  // Remove previous OTPs
+  await OtpVerification.deleteMany({
+    email,
+    purpose: 'signup',
+  });
 
-  await sendOtpEmail(email, otp);
+  // Save new OTP
+  await OtpVerification.create({
+    email,
+    otp,
+    purpose: 'signup',
+    expiresAt,
+  });
 
-  res.status(200).json({ message: 'OTP sent to email' });
+  // Respond immediately
+  res.status(200).json({
+    message: 'OTP sent to email',
+  });
+
+  // Send email in background
+  sendOtpEmail(email, otp).catch((err) => {
+    console.error('OTP email failed:', err);
+  });
 });
 
 // @desc    Verify OTP and complete registration
