@@ -1,32 +1,68 @@
-const nodemailer = require('nodemailer');
-
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: process.env.SMTP_PORT,
-  secure: process.env.SMTP_SECURE === 'true',
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+ const axios = require('axios');
 
 const sendEmail = async (to, subject, text, html) => {
-  await transporter.sendMail({
-    from: process.env.SMTP_FROM || '"Library App" <no-reply@library.app>',
-    to,
-    subject,
-    text,
-    html,
-  });
+  try {
+    const response = await axios.post(
+      'https://api.brevo.com/v3/smtp/email',
+      {
+        sender: {
+          name: process.env.BREVO_FROM_NAME || 'Library App',
+          email: process.env.BREVO_FROM_EMAIL,
+        },
+        to: [
+          {
+            email: to,
+          },
+        ],
+        subject,
+        textContent: text,
+        htmlContent: html,
+      },
+      {
+        headers: {
+          accept: 'application/json',
+          'api-key': process.env.BREVO_API_KEY,
+          'content-type': 'application/json',
+        },
+      }
+    );
+
+    console.log('Email sent successfully:', response.data);
+
+    return response.data;
+  } catch (error) {
+    console.error(
+      'Brevo email failed:',
+      error.response?.data || error.message
+    );
+
+    throw error;
+  }
 };
 
 const sendOtpEmail = async (email, otp) => {
-  await sendEmail(
+  return sendEmail(
     email,
-    'Your Verification Code',
+    'Your Library Verification Code',
     `Your OTP is ${otp}. It expires in 10 minutes.`,
-    `<p>Your OTP is <strong>${otp}</strong>. It expires in 10 minutes.</p>`
+    `
+      <div style="font-family: Arial, sans-serif;">
+        <h2>Library Account Verification</h2>
+        <p>Your verification code is:</p>
+
+        <h1 style="letter-spacing: 5px;">
+          ${otp}
+        </h1>
+
+        <p>This OTP expires in <strong>10 minutes</strong>.</p>
+
+        <p>If you did not request this code, you can ignore this email.</p>
+      </div>
+    `
   );
 };
 
-module.exports = { sendEmail, sendOtpEmail };
+module.exports = {
+  sendEmail,
+  sendOtpEmail,
+};

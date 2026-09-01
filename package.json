@@ -3,16 +3,17 @@
   "version": "1.0.0",
   "description": "Smart self-study library seat booking platform - backend",
   "main": "server.js",
-   "scripts": {
-  "start": "node server.js",
-  "dev": "nodemon server.js",
-  "create:admin": "node createAdmin.js",
-  "create:library": "node createLibrary.js",
-  "seed:timeslots": "node scripts/seedTimeSlots.js"
-},
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "create:admin": "node createAdmin.js",
+    "create:library": "node createLibrary.js",
+    "seed:timeslots": "node scripts/seedTimeSlots.js"
+  },
   "author": "Rakesh Kumar",
   "license": "ISC",
   "dependencies": {
+    "@getbrevo/brevo": "^6.0.3",
     "axios": "^1.7.2",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.10.0",
