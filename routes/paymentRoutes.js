@@ -10,6 +10,7 @@ const {
   listPendingManualPayments,
   listAllPayments,
   getMyPaymentHistory,
+  listPaymentsDue,
 } = require('../controllers/paymentController');
 
 const { protect } = require('../middleware/authMiddleware');
@@ -61,5 +62,6 @@ router.put(
   restrictTo('admin', 'superadmin'),
   verifyManualPayment
 );
+router.get('/due', restrictTo('admin', 'superadmin'), listPaymentsDue);
 
 module.exports = router;

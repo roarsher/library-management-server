@@ -6,6 +6,7 @@ const seatLockService = require('../services/seatLockService');
 const { notifyWaitingListForSeat } = require('../services/waitingListService');
 const { isSeatAvailable } = require('../utils/seatAvailability');
 const { calculateBookingPrice } = require('../utils/pricingUtils');
+ 
 // add at top of file
 // @desc    Temporarily hold a seat while student completes booking flow
 // @route   POST /api/bookings/lock-seat
@@ -228,4 +229,74 @@ const rejectBooking = asyncHandler(async (req, res) => {
 
   res.status(200).json({ message: 'Booking rejected', booking });
 });
-module.exports = { lockSeat, releaseSeat, createBooking, listBookings, approveBooking, rejectBooking };
+ 
+// @desc    Admin edits an existing booking — change seat (or remove it),
+//          change shift, or both. Re-validates availability and re-prices
+//          if the shift changes.
+// @route   PUT /api/bookings/:id/admin-edit
+// @access  Private (admin)
+const adminEditBooking = asyncHandler(async (req, res) => {
+  const { seatId, timeSlotId } = req.body; // seatId: string | null (null/omitted = no fixed seat)
+
+  const booking = await SeatBooking.findOne({ _id: req.params.id, libraryId: req.libraryId });
+  if (!booking) {
+    return res.status(404).json({ message: 'Booking not found' });
+  }
+
+  const wantsSeat = Boolean(seatId);
+  const newTimeSlotId = timeSlotId || booking.timeSlotId;
+
+  if (wantsSeat) {
+    const seat = await Seat.findOne({ _id: seatId, libraryId: req.libraryId });
+    if (!seat || !seat.isActive) {
+      return res.status(400).json({ message: 'Seat not found or disabled' });
+    }
+
+    const availability = await isSeatAvailable({
+      seatId,
+      timeSlotId: newTimeSlotId,
+      startDate: booking.startDate,
+      endDate: booking.endDate,
+      libraryId: req.libraryId,
+      excludeBookingId: booking._id, // don't conflict with the booking's own current record
+    });
+    if (!availability.available) {
+      return res.status(400).json({ message: availability.reason });
+    }
+  }
+
+  // Re-price if the shift actually changed (seat itself doesn't affect price)
+  if (timeSlotId && String(timeSlotId) !== String(booking.timeSlotId)) {
+    const newTimeSlot = await TimeSlot.findOne({ _id: timeSlotId, libraryId: req.libraryId, isActive: true });
+    if (!newTimeSlot) {
+      return res.status(400).json({ message: 'Selected time slot is not available' });
+    }
+    const library = await Library.findById(req.libraryId);
+    const newPrice = calculateBookingPrice(newTimeSlot.monthlyPrice, booking.durationMonths, library);
+
+    const addOnsTotal = booking.addOns.reduce((sum, a) => sum + a.priceAtBooking, 0);
+    booking.seatPriceAtBooking = newPrice;
+    booking.totalMonthlyAmount = newPrice + addOnsTotal;
+    booking.timeSlotId = timeSlotId;
+  }
+
+  booking.seatId = wantsSeat ? seatId : undefined;
+  await booking.save();
+
+  const populated = await SeatBooking.findById(booking._id)
+    .populate('seatId', 'seatNumber hallId')
+    .populate('timeSlotId', 'label monthlyPrice')
+    .populate({ path: 'studentId', populate: { path: 'userId', select: 'name email phone' } });
+
+  res.status(200).json({ message: 'Booking updated', booking: populated });
+});
+
+module.exports = {
+  lockSeat,
+  releaseSeat,
+  createBooking,
+  listBookings,
+  approveBooking,
+  rejectBooking,
+  adminEditBooking, // add
+};

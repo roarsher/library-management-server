@@ -252,12 +252,29 @@ const listAllPayments = asyncHandler(async (req, res) => {
   });
 });
 
+ // @desc    Students with pending/unpaid dues — active booking with no
+//          verified payment covering it, or an explicitly pending payment.
+// @route   GET /api/payments/due
+// @access  Private (admin)
+const listPaymentsDue = asyncHandler(async (req, res) => {
+  const pendingPayments = await Payment.find({
+    libraryId: req.libraryId,
+    status: { $in: ['pending', 'failed'] },
+  })
+    .populate({ path: 'studentId', populate: { path: 'userId', select: 'name email phone' } })
+    .populate('bookingId')
+    .sort({ createdAt: -1 });
+
+  res.status(200).json({ count: pendingPayments.length, payments: pendingPayments });
+});
+
 module.exports = {
   createRazorpayOrder,
   verifyRazorpayPayment,
   submitManualPayment,
   verifyManualPayment,
   listPendingManualPayments,
-  listAllPayments,
   getMyPaymentHistory,
-};
+  listAllPayments,
+  listPaymentsDue, // add
+}; 

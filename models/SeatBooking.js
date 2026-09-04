@@ -12,11 +12,11 @@ const seatBookingSchema = new mongoose.Schema(
       ref: 'Student',
       required: true,
     },
-    seatId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Seat',
-      required: true,
-    },
+     seatId: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: 'Seat',
+  required: false, // null/absent means "no fixed seat" — student floats, still has a valid shift/membership
+  },
     timeSlotId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'TimeSlot',
