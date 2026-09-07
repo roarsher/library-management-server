@@ -21,11 +21,17 @@ const addOnSchema = new mongoose.Schema(
     icon: {
       type: String, // icon key/name for UI, e.g. "moon", "lock", "zap"
     },
+        unit: {
+      type: String,
+      enum: ['month', 'hour'], // 'hour' = student selects a quantity, price is per-hour-per-month
+      default: 'month',
+    },
     isActive: {
       type: Boolean,
       default: true,
     },
   },
+  
   { timestamps: true }
 );
 
