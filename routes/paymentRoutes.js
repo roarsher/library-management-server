@@ -2,15 +2,17 @@
 
 const router = express.Router();
 
-const {
+ const {
   createRazorpayOrder,
   verifyRazorpayPayment,
   submitManualPayment,
   verifyManualPayment,
   listPendingManualPayments,
-  listAllPayments,
   getMyPaymentHistory,
+  listAllPayments,
   listPaymentsDue,
+  recordPartialPayment,
+  clearDue,
 } = require('../controllers/paymentController');
 
 const { protect } = require('../middleware/authMiddleware');
