@@ -63,5 +63,7 @@ router.put(
   verifyManualPayment
 );
 router.get('/due', restrictTo('admin', 'superadmin'), listPaymentsDue);
+router.post('/record-partial', restrictTo('admin', 'superadmin'), recordPartialPayment);
+router.put('/:id/clear-due', restrictTo('admin', 'superadmin'), clearDue);
 
 module.exports = router;

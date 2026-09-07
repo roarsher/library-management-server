@@ -61,6 +61,14 @@ const paymentSchema = new mongoose.Schema(
       unique: true,
       sparse: true,
     },
+        dueAmount: {
+      type: Number,
+      default: 0, // remaining balance not yet collected for this payment record
+    },
+    isFullyCleared: {
+      type: Boolean,
+      default: true, // false while dueAmount > 0
+    },
     invoiceUrl: {
       type: String,
     },

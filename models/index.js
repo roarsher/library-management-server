@@ -26,4 +26,5 @@ module.exports = {
   OtpVerification: require('./OtpVerification'),
   Todo: require('./Todo'),
   PushSubscription: require('./PushSubscription'),
+  Coupon: require('./Coupon'),
 };

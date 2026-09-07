@@ -44,7 +44,7 @@ app.use(
     credentials: true,
   })
 );
-
+ 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -83,6 +83,7 @@ app.use('/api/timer', timerRoutes);   // ← add this
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/push', pushRoutes);
  app.use('/api/attendance', attendanceRoutes);
+app.use('/api/coupons', require('./routes/couponRoutes'));
 
  
 
