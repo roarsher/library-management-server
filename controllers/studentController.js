@@ -4,44 +4,66 @@ const asyncHandler = require('../utils/asyncHandler');
 // @desc    Submit/update admission form (student's own profile)
 // @route   POST /api/students/admission
 // @access  Private (student)
+// const submitAdmissionForm = asyncHandler(async (req, res) => {
+//   const {
+//     dob,
+//     gender,
+//     bloodGroup,
+//     aadhaarNumber,
+//     parentDetails,
+//     address,
+//     qualification,
+//     preparingFor,
+//     photoUrl,
+//     idProofUrl,
+//   } = req.body;
+
+//   const existing = await Student.findOne({ userId: req.user._id });
+//   if (existing) {
+//     return res.status(400).json({ message: 'Admission form already submitted' });
+//   }
+
+//   const student = await Student.create({
+//     userId: req.user._id,
+//     libraryId: req.libraryId,
+//     dob,
+//     gender,
+//     bloodGroup,
+//     aadhaarNumber,
+//     parentDetails,
+//     address,
+//     qualification,
+//     preparingFor,
+//     photoUrl,
+//     idProofUrl,
+//     admissionStatus: 'pending',
+//   });
+
+//   res.status(201).json({ student });
+// });
+
 const submitAdmissionForm = asyncHandler(async (req, res) => {
   const {
-    dob,
-    gender,
-    bloodGroup,
-    aadhaarNumber,
-    parentDetails,
-    address,
-    qualification,
-    preparingFor,
-    photoUrl,
-    idProofUrl,
+    dob, gender, bloodGroup, aadhaarNumber, parentDetails, address,
+    qualification, preparingFor, photoUrl, idProofUrl,
   } = req.body;
 
   const existing = await Student.findOne({ userId: req.user._id });
   if (existing) {
-    return res.status(400).json({ message: 'Admission form already submitted' });
+    return res.status(400).json({ message: 'Profile already submitted' });
   }
 
   const student = await Student.create({
     userId: req.user._id,
     libraryId: req.libraryId,
-    dob,
-    gender,
-    bloodGroup,
-    aadhaarNumber,
-    parentDetails,
-    address,
-    qualification,
-    preparingFor,
-    photoUrl,
-    idProofUrl,
-    admissionStatus: 'pending',
+    dob, gender, bloodGroup, aadhaarNumber, parentDetails, address,
+    qualification, preparingFor, photoUrl, idProofUrl,
+    admissionStatus: 'verified', // auto-verified — no separate admin review step anymore
+    verifiedAt: new Date(),
   });
 
   res.status(201).json({ student });
 });
-
 // @desc    Get logged-in student's own profile
 // @route   GET /api/students/me
 // @access  Private (student)
