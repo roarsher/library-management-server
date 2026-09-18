@@ -32,50 +32,78 @@ const createSeat = asyncHandler(async (req, res) => {
 // @desc    Admin bulk-generates seats for a hall
 // @route   POST /api/seats/bulk-generate
 // @access  Private (admin)
-const bulkGenerateSeats = asyncHandler(async (req, res) => {
-  const {
-    hallId,
-    count,
-    startNumber = 1,
-    prefix = '',
-  } = req.body;
+// const bulkGenerateSeats = asyncHandler(async (req, res) => {
+//   const {
+//     hallId,
+//     count,
+//     startNumber = 1,
+//     prefix = '',
+//   } = req.body;
 
-  const hall = await Hall.findOne({
-    _id: hallId,
-    libraryId: req.libraryId,
-  });
+//   const hall = await Hall.findOne({
+//     _id: hallId,
+//     libraryId: req.libraryId,
+//   });
 
-  if (!hall) {
-    return res.status(404).json({ message: 'Hall not found' });
-  }
+//   if (!hall) {
+//     return res.status(404).json({ message: 'Hall not found' });
+//   }
 
-  if (!count || count <= 0) {
-    return res.status(400).json({
-      message: 'count must be a positive number',
-    });
-  }
+//   if (!count || count <= 0) {
+//     return res.status(400).json({
+//       message: 'count must be a positive number',
+//     });
+//   }
 
+//   const docs = [];
+
+//   for (let i = 0; i < count; i++) {
+//     docs.push({
+//       libraryId: req.libraryId,
+//       hallId,
+//       seatNumber: `${prefix}${startNumber + i}`,
+//     });
+//   }
+
+//   const created = await Seat.insertMany(docs, {
+//     ordered: false,
+//   });
+
+//   hall.totalSeats += created.length;
+//   await hall.save();
+
+//   res.status(201).json({
+//     count: created.length,
+//     seats: created,
+//   });
+// });
+ const bulkGenerateSeats = asyncHandler(async (req, res) => {
+  const { hallId, count, startNumber = 1, prefix = '', seatsPerRow = 10, tier = 'General' } = req.body;
+
+  const hall = await Hall.findOne({ _id: hallId, libraryId: req.libraryId });
+  if (!hall) return res.status(404).json({ message: 'Hall not found' });
+  if (!count || count <= 0) return res.status(400).json({ message: 'count must be a positive number' });
+
+  const rowLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   const docs = [];
-
   for (let i = 0; i < count; i++) {
+    const rowIndex = Math.floor(i / seatsPerRow);
+    const column = (i % seatsPerRow) + 1;
     docs.push({
       libraryId: req.libraryId,
       hallId,
       seatNumber: `${prefix}${startNumber + i}`,
+      row: rowLetters[rowIndex] || `R${rowIndex + 1}`,
+      column,
+      tier,
     });
   }
 
-  const created = await Seat.insertMany(docs, {
-    ordered: false,
-  });
-
+  const created = await Seat.insertMany(docs, { ordered: false });
   hall.totalSeats += created.length;
   await hall.save();
 
-  res.status(201).json({
-    count: created.length,
-    seats: created,
-  });
+  res.status(201).json({ count: created.length, seats: created });
 });
 
 // @desc    Admin bulk-creates seats with explicit custom numbers

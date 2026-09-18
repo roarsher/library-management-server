@@ -25,6 +25,17 @@ const seatSchema = new mongoose.Schema(
       type: Boolean,
       default: true, // false if seat is physically out of service
     },
+        
+   row: {
+      type: String,
+    },
+    column: {
+      type: Number,
+    },
+    tier: {
+      type: String, // e.g. "Recliner", "Platinum", "Gold" — groups seats into price/category bands
+      default: 'General',
+    },
   },
   { timestamps: true }
 );
