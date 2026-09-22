@@ -8,6 +8,7 @@ const {
   approveBooking,
   verifyAndApproveBooking,
   rejectBooking,
+  assignSeatToStudent,
 } = require('../controllers/bookingController');
 const { protect } = require('../middleware/authMiddleware');
 const { restrictTo } = require('../middleware/roleMiddleware');
@@ -24,5 +25,6 @@ router.put('/:id/approve', restrictTo('admin', 'superadmin'), approveBooking);
 router.put('/:id/reject', restrictTo('admin', 'superadmin'), rejectBooking);
 router.put('/:id/verify-and-approve', restrictTo('admin', 'superadmin'), verifyAndApproveBooking);
 router.put('/:id/admin-edit', restrictTo('admin', 'superadmin'), adminEditBooking);
+router.post('/assign', restrictTo('admin', 'superadmin'), assignSeatToStudent);
 
 module.exports = router;

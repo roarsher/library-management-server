@@ -1039,19 +1039,112 @@ const adminEditBooking =
 // EXPORTS
 // ============================================================
 
-module.exports = {
+
+
+// @desc    Admin assigns a seat/shift to an existing student who doesn't
+//          have an active booking yet (e.g. profile created without a seat).
+//          Creates the booking (instantly active) and records payment.
+// @route   POST /api/bookings/assign
+// @access  Private (admin)
+const assignSeatToStudent = asyncHandler(async (req, res) => {
+  const {
+    studentId,
+    seatId,
+    timeSlotId,
+    durationMonths,
+    startDate,
+    paymentMethod,
+    amountPaid,
+  } = req.body;
+
+  const student = await Student.findOne({ _id: studentId, libraryId: req.libraryId }).populate('userId', 'name phone email');
+  if (!student) {
+    return res.status(404).json({ message: 'Student not found' });
+  }
+
+  const existingActive = await SeatBooking.findOne({ studentId: student._id, status: 'active' });
+  if (existingActive) {
+    return res.status(400).json({ message: 'This student already has an active booking' });
+  }
+
+  const seat = await Seat.findOne({ _id: seatId, libraryId: req.libraryId });
+  if (!seat || !seat.isActive) {
+    return res.status(400).json({ message: 'Seat not found or disabled' });
+  }
+
+  const start = new Date(startDate || Date.now());
+  const end = new Date(start);
+  end.setMonth(end.getMonth() + Number(durationMonths));
+
+  const availability = await isSeatAvailable({
+    seatId,
+    timeSlotId,
+    startDate: start,
+    endDate: end,
+    libraryId: req.libraryId,
+  });
+  if (!availability.available) {
+    return res.status(400).json({ message: availability.reason });
+  }
+
+  const library = await Library.findById(req.libraryId);
+  const timeSlot = await TimeSlot.findOne({ _id: timeSlotId, libraryId: req.libraryId, isActive: true });
+  if (!timeSlot) {
+    return res.status(400).json({ message: 'Selected time slot is not available' });
+  }
+
+  const seatPriceAtBooking = calculateBookingPrice(timeSlot.monthlyPrice, durationMonths, library);
+
+  const booking = await SeatBooking.create({
+    libraryId: req.libraryId,
+    studentId: student._id,
+    seatId,
+    timeSlotId,
+    durationMonths,
+    startDate: start,
+    endDate: end,
+    addOns: [],
+    seatPriceAtBooking,
+    totalMonthlyAmount: seatPriceAtBooking,
+    status: 'active',
+    approvedBy: req.user._id,
+    approvedAt: new Date(),
+  });
+
+  const paidAmount = amountPaid != null ? Number(amountPaid) : seatPriceAtBooking;
+  const dueAmount = Math.max(seatPriceAtBooking - paidAmount, 0);
+
+  const payment = await Payment.create({
+    libraryId: req.libraryId,
+    studentId: student._id,
+    bookingId: booking._id,
+    amount: paidAmount,
+    dueAmount,
+    isFullyCleared: dueAmount === 0,
+    method: paymentMethod || 'cash',
+    status: 'verified',
+    verifiedBy: req.user._id,
+    verifiedAt: new Date(),
+  });
+
+  const { generateInvoiceForPayment } = require('../services/invoiceService');
+  await generateInvoiceForPayment(payment);
+
+  const populated = await SeatBooking.findById(booking._id)
+    .populate('seatId', 'seatNumber hallId')
+    .populate('timeSlotId', 'label monthlyPrice');
+
+  res.status(201).json({ message: 'Seat assigned', booking: populated, payment });
+});
+ module.exports = {
   lockSeat,
   releaseSeat,
   createBooking,
   listBookings,
-
-  // Existing separate approval endpoint
   approveBooking,
-
-  // NEW: payment verification + approval
   verifyAndApproveBooking,
-
   rejectBooking,
   adminEditBooking,
+  assignSeatToStudent, // add
 };
  
