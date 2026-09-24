@@ -13,6 +13,7 @@ const router = express.Router();
   listPaymentsDue,
   recordPartialPayment,
   clearDue,
+  getMyDues,
 } = require('../controllers/paymentController');
 
 const { protect } = require('../middleware/authMiddleware');
@@ -67,5 +68,6 @@ router.put(
 router.get('/due', restrictTo('admin', 'superadmin'), listPaymentsDue);
 router.post('/record-partial', restrictTo('admin', 'superadmin'), recordPartialPayment);
 router.put('/:id/clear-due', restrictTo('admin', 'superadmin'), clearDue);
+router.get('/my-due', restrictTo('student'), getMyDues);
 
 module.exports = router;

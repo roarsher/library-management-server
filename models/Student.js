@@ -87,6 +87,11 @@ const studentSchema = new mongoose.Schema(
       type: Date, // midnight-normalized date of the most recent check-in, used to compute streaks in real time
       default: null,
     },
+        registrationNumber: {
+      type: String,
+      unique: true,
+      sparse: true, // assigned on first booking, not at profile creation
+    },
   },
   { timestamps: true }
 );

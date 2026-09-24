@@ -27,4 +27,5 @@ module.exports = {
   Todo: require('./Todo'),
   PushSubscription: require('./PushSubscription'),
   Coupon: require('./Coupon'),
+  Counter: require('./Counter'),
 };

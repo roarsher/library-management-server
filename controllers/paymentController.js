@@ -419,6 +419,15 @@ const listPaymentsDue = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Student's own outstanding dues
+// @route   GET /api/payments/my-due
+// @access  Private (student)
+const getMyDues = asyncHandler(async (req, res) => {
+  const student = await Student.findOne({ userId: req.user._id });
+  const payments = await Payment.find({ studentId: student._id, dueAmount: { $gt: 0 } }).sort({ createdAt: -1 });
+  const totalDue = payments.reduce((sum, p) => sum + p.dueAmount, 0);
+  res.status(200).json({ totalDue, payments });
+});
 module.exports = {
   createRazorpayOrder,
   verifyRazorpayPayment,
@@ -430,4 +439,5 @@ module.exports = {
   listPaymentsDue,
   recordPartialPayment,
   clearDue,
+  getMyDues,
 };

@@ -81,24 +81,28 @@ const getMyProfile = asyncHandler(async (req, res) => {
 // @desc    List all students in the library (with optional status filter)
 // @route   GET /api/students?status=pending
 // @access  Private (admin)
-const listStudents = asyncHandler(async (req, res) => {
+ const listStudents = asyncHandler(async (req, res) => {
   const { status, search } = req.query;
   const filter = { libraryId: req.libraryId };
   if (status) filter.admissionStatus = status;
 
-  let query = Student.find(filter).populate('userId', 'name email phone isActive');
+  const students = await Student.find(filter).populate('userId', 'name email phone isActive').sort({ createdAt: -1 });
 
-  const students = await query.sort({ createdAt: -1 });
+  const studentIds = students.map((s) => s._id);
+  const dueAgg = await Payment.aggregate([
+    { $match: { studentId: { $in: studentIds }, dueAmount: { $gt: 0 } } },
+    { $group: { _id: '$studentId', totalDue: { $sum: '$dueAmount' } } },
+  ]);
+  const dueMap = new Map(dueAgg.map((d) => [d._id.toString(), d.totalDue]));
 
-  const filtered = search
-    ? students.filter((s) =>
-        s.userId?.name?.toLowerCase().includes(search.toLowerCase())
-      )
-    : students;
+  let filtered = students.map((s) => ({ ...s.toObject(), totalDue: dueMap.get(s._id.toString()) || 0 }));
+
+  if (search) {
+    filtered = filtered.filter((s) => s.userId?.name?.toLowerCase().includes(search.toLowerCase()));
+  }
 
   res.status(200).json({ count: filtered.length, students: filtered });
 });
-
 // @desc    Get single student by id
 // @route   GET /api/students/:id
 // @access  Private (admin)
