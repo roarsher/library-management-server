@@ -1,5 +1,6 @@
 const asyncHandler = require('../utils/asyncHandler');
  const { Student, User, SeatBooking } = require('../models');
+ const Payment = require('../models/Payment');
 
 // @desc    Submit/update admission form (student's own profile)
 // @route   POST /api/students/admission
