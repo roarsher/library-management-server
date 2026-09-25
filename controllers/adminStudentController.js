@@ -567,6 +567,7 @@ const {
 const { generateInvoiceForPayment } = require('../services/invoiceService');
 const { isSeatAvailable } = require('../utils/seatAvailability');
 const { calculateBookingPrice } = require('../utils/pricingUtils');
+const generateRegistrationNumber = require('../utils/generateRegistrationNumber');
 
 // @desc    Admin adds a student directly
 //          Can be created with or without a seat.
@@ -701,27 +702,19 @@ const adminCreateStudent = asyncHandler(async (req, res) => {
   // 6. Create Student Profile
   // ---------------------------------------------------------
 
+   const registrationNumber = await generateRegistrationNumber(req.libraryId);
+
   const student = await Student.create({
     userId: user._id,
     libraryId: req.libraryId,
-
-    dob,
-    gender,
-    bloodGroup,
-    aadhaarNumber,
-    parentDetails,
-    address,
-    qualification,
-    preparingFor,
-
-    photoUrl,
-    idProofUrl,
-
+    dob, gender, bloodGroup, aadhaarNumber, parentDetails, address,
+    qualification, preparingFor,
+    photoUrl, idProofUrl,
     admissionStatus: 'verified',
     verifiedBy: req.user._id,
     verifiedAt: new Date(),
+    registrationNumber,
   });
-
   // ---------------------------------------------------------
   // 7. NO SEAT SELECTED
   //
@@ -731,18 +724,11 @@ const adminCreateStudent = asyncHandler(async (req, res) => {
   // No invoice/receipt.
   // ---------------------------------------------------------
 
-  if (!wantsSeat) {
+    if (!wantsSeat) {
     return res.status(201).json({
       message: 'Student added successfully (no seat assigned yet)',
-
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-      },
-
+      user: { id: user._id, name: user.name, email: user.email },
       student,
-
       booking: null,
       payment: null,
       receiptUrl: null,

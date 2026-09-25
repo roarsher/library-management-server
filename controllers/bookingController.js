@@ -296,6 +296,11 @@ const createBooking = asyncHandler(async (req, res) => {
     seatPriceAtBooking +
     addOnsTotal;
 
+ // --------------------------------------------------
+  // ASSIGN REGISTRATION NUMBER (first booking only)
+  // --------------------------------------------------
+
+  
 
   // --------------------------------------------------
   // CREATE BOOKING

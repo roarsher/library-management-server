@@ -43,6 +43,7 @@ const asyncHandler = require('../utils/asyncHandler');
 //   res.status(201).json({ student });
 // });
 
+const generateRegistrationNumber = require('../utils/generateRegistrationNumber');
 const submitAdmissionForm = asyncHandler(async (req, res) => {
   const {
     dob, gender, bloodGroup, aadhaarNumber, parentDetails, address,
@@ -54,13 +55,16 @@ const submitAdmissionForm = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: 'Profile already submitted' });
   }
 
+  const registrationNumber = await generateRegistrationNumber(req.libraryId);
+
   const student = await Student.create({
     userId: req.user._id,
     libraryId: req.libraryId,
     dob, gender, bloodGroup, aadhaarNumber, parentDetails, address,
     qualification, preparingFor, photoUrl, idProofUrl,
-    admissionStatus: 'verified', // auto-verified — no separate admin review step anymore
+    admissionStatus: 'verified',
     verifiedAt: new Date(),
+    registrationNumber,
   });
 
   res.status(201).json({ student });
