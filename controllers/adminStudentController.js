@@ -844,17 +844,18 @@ const adminCreateStudent = asyncHandler(async (req, res) => {
   // 14. Create Payment
   // ---------------------------------------------------------
 
+    const paidAmount = amountPaid != null ? Number(amountPaid) : totalMonthlyAmount;
+  const dueAmount = Math.max(totalMonthlyAmount - paidAmount, 0);
+
   const payment = await Payment.create({
     libraryId: req.libraryId,
     studentId: student._id,
     bookingId: booking._id,
-
-    amount: amountPaid ?? totalMonthlyAmount,
-
+    amount: paidAmount,
+    dueAmount,
+    isFullyCleared: dueAmount === 0,
     method: paymentMethod || 'cash',
-
     status: 'verified',
-
     verifiedBy: req.user._id,
     verifiedAt: new Date(),
   });
