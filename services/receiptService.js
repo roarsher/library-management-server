@@ -3,7 +3,12 @@ const fs = require('fs');
 const PDFDocument = require('pdfkit');
 const { cloudinary } = require('../config/cloudinary');
 
+
 const LOGO_PATH = path.join(__dirname, '../assets/gyan-library-logo.png');
+const UNICODE_FONT_PATH = path.join(
+  __dirname,
+  '../assets/fonts/DejaVuSans.ttf'
+);
 
 const PAYMENT_MODE_LABEL = { cash: 'Cash', manual_qr: 'Online (QR)' };
 
