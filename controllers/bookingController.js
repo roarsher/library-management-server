@@ -841,7 +841,7 @@ const rejectBooking =
 //          Change seat, shift, or both.
 // @route   PUT /api/bookings/:id/admin-edit
 // @access  Private (admin)
-const adminEditBooking =
+ const adminEditBooking =
   asyncHandler(async (req, res) => {
 
     const {
@@ -960,6 +960,14 @@ const adminEditBooking =
         );
 
 
+      // --------------------------------------------------
+      // SAVE OLD TOTAL BEFORE REPRICING
+      // --------------------------------------------------
+
+      const oldTotal =
+        booking.totalMonthlyAmount;
+
+
       const newPrice =
         calculateBookingPrice(
           newTimeSlot.monthlyPrice,
@@ -979,15 +987,110 @@ const adminEditBooking =
         );
 
 
+      const newTotal =
+        newPrice +
+        addOnsTotal;
+
+
       booking.seatPriceAtBooking =
         newPrice;
 
       booking.totalMonthlyAmount =
-        newPrice +
-        addOnsTotal;
+        newTotal;
 
       booking.timeSlotId =
         timeSlotId;
+
+
+      // --------------------------------------------------
+      // SHIFT CHANGE PRICE DIFFERENCE
+      //
+      // If cheaper:
+      //   No refund and nothing recorded.
+      //
+      // If more expensive:
+      //   The difference becomes an additional
+      //   amount the student owes.
+      //
+      //   This amount is added to the latest
+      //   payment's existing dueAmount.
+      // --------------------------------------------------
+
+      const priceDifference =
+        newTotal - oldTotal;
+
+
+      if (priceDifference > 0) {
+
+        const latestPayment =
+          await Payment.findOne({
+            bookingId:
+              booking._id,
+          }).sort({
+            createdAt: -1,
+          });
+
+
+        if (latestPayment) {
+
+          latestPayment.dueAmount =
+            (latestPayment.dueAmount || 0) +
+            priceDifference;
+
+          latestPayment.isFullyCleared =
+            false;
+
+          await latestPayment.save();
+
+        } else {
+
+          // --------------------------------------------------
+          // DEFENSIVE FALLBACK
+          //
+          // Normally an active booking should already
+          // have a payment. If there is no payment,
+          // create one only to track the new due.
+          // --------------------------------------------------
+
+          await Payment.create({
+            libraryId:
+              req.libraryId,
+
+            studentId:
+              booking.studentId,
+
+            bookingId:
+              booking._id,
+
+            amount: 0,
+
+            dueAmount:
+              priceDifference,
+
+            isFullyCleared:
+              false,
+
+            method:
+              'cash',
+
+            status:
+              'verified',
+
+            verifiedBy:
+              req.user._id,
+
+            verifiedAt:
+              new Date(),
+          });
+        }
+      }
+
+      // --------------------------------------------------
+      // priceDifference <= 0
+      //
+      // Same price or cheaper shift:
+      // intentionally do nothing.
+      // --------------------------------------------------
     }
 
 

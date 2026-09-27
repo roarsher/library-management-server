@@ -119,7 +119,7 @@ const verifyRazorpayPayment = asyncHandler(async (req, res) => {
 // @access  Private (student)
 // Note: expects req.body.screenshotUrl already uploaded
 // via your file-upload route.
-const submitManualPayment = asyncHandler(async (req, res) => {
+ const submitManualPayment = asyncHandler(async (req, res) => {
   const { bookingId, amount, screenshotUrl } = req.body;
 
   const student = await Student.findOne({
@@ -144,13 +144,16 @@ const submitManualPayment = asyncHandler(async (req, res) => {
     });
   }
 
+  const paidAmount = Number(amount);
+  const dueAmount = Math.max(booking.totalMonthlyAmount - paidAmount, 0);
+
   const payment = await Payment.create({
     libraryId: req.libraryId,
     studentId: student._id,
     bookingId: booking._id,
-    amount,
-    dueAmount: 0,
-    isFullyCleared: true,
+    amount: paidAmount,
+    dueAmount,
+    isFullyCleared: dueAmount === 0,
     method: 'manual_qr',
     screenshotUrl,
     status: 'pending',

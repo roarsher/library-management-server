@@ -94,14 +94,17 @@ const getMyProfile = asyncHandler(async (req, res) => {
   const students = await Student.find(filter).populate('userId', 'name email phone isActive').sort({ createdAt: -1 });
 
   const studentIds = students.map((s) => s._id);
-  const dueAgg = await Payment.aggregate([
-    { $match: { studentId: { $in: studentIds }, dueAmount: { $gt: 0 } } },
-    { $group: { _id: '$studentId', totalDue: { $sum: '$dueAmount' } } },
-  ]);
-  const dueMap = new Map(dueAgg.map((d) => [d._id.toString(), d.totalDue]));
+   // backend/controllers/studentController.js — listStudents, extend the due aggregation
+const dueAgg = await Payment.aggregate([
+  { $match: { studentId: { $in: studentIds }, dueAmount: { $gt: 0 } } },
+  { $group: { _id: '$studentId', totalDue: { $sum: '$dueAmount' }, latestPaymentId: { $last: '$_id' } } },
+]);
+const dueMap = new Map(dueAgg.map((d) => [d._id.toString(), { totalDue: d.totalDue, duePaymentId: d.latestPaymentId }]));
 
-  let filtered = students.map((s) => ({ ...s.toObject(), totalDue: dueMap.get(s._id.toString()) || 0 }));
-
+let filtered = students.map((s) => {
+  const due = dueMap.get(s._id.toString()) || { totalDue: 0, duePaymentId: null };
+  return { ...s.toObject(), totalDue: due.totalDue, duePaymentId: due.duePaymentId };
+});
   if (search) {
     filtered = filtered.filter((s) => s.userId?.name?.toLowerCase().includes(search.toLowerCase()));
   }
