@@ -1,0 +1,8 @@
+const path = require('path');
+
+const fontPath = path.join(__dirname, '../assets/fonts/DejaVuSans.ttf');
+
+doc.font(fontPath)
+   .fontSize(9)
+   .fillColor('#1565c0')
+   .text(`₹${payment.amount}`, startX + 6, y + 18);
