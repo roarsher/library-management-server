@@ -12,10 +12,10 @@ const paymentSchema = new mongoose.Schema(
       ref: 'Student',
       required: true,
     },
-    bookingId: {
+         bookingId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'SeatBooking',
-      required: true,
+      required: false, // null when payment isn't tied to a specific booking yet
     },
     amount: {
       type: Number,
