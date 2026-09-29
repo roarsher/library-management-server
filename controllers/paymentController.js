@@ -261,34 +261,24 @@ const getMyPaymentHistory = asyncHandler(async (req, res) => {
 // @desc    Admin — list all payments for the library
 // @route   GET /api/payments?status=verified
 // @access  Private (admin)
-const listAllPayments = asyncHandler(async (req, res) => {
-  const filter = {
-    libraryId: req.libraryId,
-  };
+ const listAllPayments = asyncHandler(async (req, res) => {
+  const filter = { libraryId: req.libraryId };
 
-  if (req.query.status) {
+  if (req.query.status === 'due') {
+    // "Due" isn't a real payment status. It means any payment that still has a balance owed.
+    filter.dueAmount = { $gt: 0 };
+  } else if (req.query.status) {
     filter.status = req.query.status;
   }
 
-  if (req.query.method) {
-    filter.method = req.query.method;
-  }
+  if (req.query.studentId) filter.studentId = req.query.studentId;
 
   const payments = await Payment.find(filter)
-    .populate({
-      path: 'studentId',
-      populate: {
-        path: 'userId',
-        select: 'name email phone',
-      },
-    })
+    .populate({ path: 'studentId', populate: { path: 'userId', select: 'name email phone' } })
     .populate('bookingId')
     .sort({ createdAt: -1 });
 
-  res.status(200).json({
-    count: payments.length,
-    payments,
-  });
+  res.status(200).json({ count: payments.length, payments });
 });
 
 // @desc    Admin records a payment where the student paid less
