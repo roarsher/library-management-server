@@ -17,7 +17,7 @@ const MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI;
 // ============================================================
 // CHANGE #2 — your library ID
 // ============================================================
-const LIBRARY_ID = '6a9571ff82ff329f15173be4';
+const LIBRARY_ID = '6abcc939e5fe6c9b2b62fca4';
 
 const defaultPassword = 'ChangeMe123!';
 

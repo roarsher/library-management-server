@@ -13,7 +13,7 @@ const { Seat, Hall } = require('../models');
 // CHANGE THESE before running
 // ============================================================
 const MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI;
-const LIBRARY_ID = '6a9571ff82ff329f15173be4';
+ const LIBRARY_ID = '6abcc939e5fe6c9b2b62fca4';
 const HALL_NAME = 'Office Hall'; // whatever name this hall should have
 const HALL_NUMBER = 6; // must be unique — check your Hall model for its exact field/rules
 

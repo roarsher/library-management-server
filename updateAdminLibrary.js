@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const User = require('./models/User');
 
 const ADMIN_ID = '6a957109dd8c3d445cc60005';
-const LIBRARY_ID = '6a9571ff82ff329f15173be4';
+const LIBRARY_ID = '6abcc939e5fe6c9b2b62fca4';
 
 const updateAdmin = async () => {
   try {
